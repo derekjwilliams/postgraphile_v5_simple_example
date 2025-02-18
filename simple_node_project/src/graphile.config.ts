@@ -17,7 +17,6 @@ const preset: GraphileConfig.Preset = {
       schemas: [process.env.DB_SCHEMA || 'public'],
     }),
   ],
-  // plugins: [PostgisPlugin.default],
   grafast: {
     explain: true,
   },
