@@ -16,7 +16,7 @@ Most basic example is in `single_file` directory. The entire server is contained
 
 ### Simple, But With Separation of Concerns Node Express Server
 
-The `simple_node_project` directory contains a project with three files, to separate the configution, postgrahile, and express server concerns.
+The `simple_node_project` directory contains a project with three files, to separate the configution, postgraphile, and express server concerns.
 
 ### Future Work
 
