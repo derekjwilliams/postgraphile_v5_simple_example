@@ -49,7 +49,7 @@ query {
 
 ### Show Me The Code
 
-Open `server.ts` to see the code. The contents are explained below in [Exploring The Code](#exploring-the-code)
+Open `server.ts` to see the code. The contents are explained below in [Disecting The Code](#disecting-the-code)
 
 ### Well, There Are Two Other Files
 
