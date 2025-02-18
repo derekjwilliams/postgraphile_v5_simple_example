@@ -172,11 +172,13 @@ Configuration of the service
 
 ```TypeScript
 import { PostGraphileAmberPreset } from 'postgraphile/presets/amber'
+import { PgSimplifyInflectionPreset } from '@graphile/simplify-inflection'
 import { makePgService } from 'postgraphile/adaptors/pg'
+import { PgManyToManyPreset } from '@graphile-contrib/pg-many-to-many'
 
 /** @type {GraphileConfig.Preset} */
 const preset: GraphileConfig.Preset = {
-  extends: [PostGraphileAmberPreset],
+  extends: [PostGraphileAmberPreset, PgSimplifyInflectionPreset, PgManyToManyPreset],
   pgServices: [
     makePgService({
       connectionString: 'postgres://postgres:postgres@localhost:5432/events',
@@ -200,6 +202,14 @@ See [Configuration](https://postgraphile.org/postgraphile/next/config) for descr
 #### `PostGraphileAmberPreset`
 
 Set of presets that provide a standard set of functionality for Postgraphile
+
+#### `PgSimplifyInflectionPreset`
+
+Preset that simplifies naming in the queries, see https://github.com/graphile/crystal/tree/main/graphile-build/graphile-simplify-inflection
+
+#### `PgManyToManyPreset`
+
+Preset that exposes relationships between fields, see https://github.com/graphile-contrib/pg-many-to-many
 
 ## Diving Deeper Into The Postgraphile Library(For the very curious)
 

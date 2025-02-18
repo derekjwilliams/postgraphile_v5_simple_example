@@ -2,7 +2,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "NODE_OPTIONS='--loader ts-node/esm' node --no-warnings=ExperimentalWarning  src/server.ts"
+    "dev": "GRAPHILE_ENV=development NODE_OPTIONS='--loader ts-node/esm' node --no-warnings=ExperimentalWarning  src/server.ts"
   },
   "type": "module",
   "devDependencies": {
@@ -17,6 +17,8 @@
     "typescript-eslint": "^8.24.1"
   },
   "dependencies": {
+    "@graphile-contrib/pg-many-to-many": "^2.0.0-beta.6",
+    "@graphile/simplify-inflection": "^8.0.0-beta.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "postgraphile": "^5.0.0-beta.38"
