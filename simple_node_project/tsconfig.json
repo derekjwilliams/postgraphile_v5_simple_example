@@ -9,8 +9,6 @@
     "skipLibCheck": true,
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  },
-  "include": ["src/**/*"]
+    "baseUrl": "." // Base directory for path resolution
+  }
 }
