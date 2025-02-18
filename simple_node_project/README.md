@@ -168,7 +168,6 @@ import { PgSimplifyInflectionPreset } from '@graphile/simplify-inflection'
 import { makePgService } from 'postgraphile/adaptors/pg'
 import { PgManyToManyPreset } from '@graphile-contrib/pg-many-to-many'
 
-/** @type {GraphileConfig.Preset} */
 const preset: GraphileConfig.Preset = {
   extends: [PostGraphileAmberPreset, PgSimplifyInflectionPreset, PgManyToManyPreset],
   pgServices: [
