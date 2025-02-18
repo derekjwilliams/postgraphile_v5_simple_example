@@ -158,14 +158,6 @@ Create a Postgraphile Instance (`pgl`) using the `preset` configuration and expo
 export const pgl = postgraphile(preset)
 ```
 
-### `pgl.ts`
-
-Create a Postgraphile Instance (`pgl`) using the `preset` configuration and export the instance.
-
-```TypeScript
-export const pgl = postgraphile(preset)
-```
-
 ### `graphile.config.ts`
 
 Configuration of the service
