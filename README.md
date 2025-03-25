@@ -30,8 +30,12 @@ Goal is to add examples that include:
 
 - jwt handling
 
-- Row leven security
+- Row level security
 
 - Plugins
 
   I would also like to get some of the existing plugins working, I am most interested in the [graphile/postgis](https://github.com/graphile/postgis) plugin, the [connection filter](https://github.com/graphile-contrib/postgraphile-plugin-connection-filter) plugin would also be nice to have.
+
+- PostGIS errors
+
+  The older Postgraphile PostGIS plugin does not work with version 5 of Postgraphile, ref: https://github.com/graphile/postgis. So if you run the examples with databases that have GIS columns you will likely see the error: `Could not build PgCodec for 'public.geography'; maybe you need a plugin implementing gather.hooks.pgCodecs_findPgCodec to add support.` And the GIS columns are not available.
