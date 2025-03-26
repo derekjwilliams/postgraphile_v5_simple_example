@@ -4,6 +4,7 @@ import { PostGraphileAmberPreset } from 'postgraphile/presets/amber'
 import { makePgService } from 'postgraphile/adaptors/pg'
 import { PgSimplifyInflectionPreset } from '@graphile/simplify-inflection'
 import { PgManyToManyPreset } from '@graphile-contrib/pg-many-to-many'
+import { PgPostgisWktPlugin } from './plugins/PgPostgisWktPlugin.js'
 
 const preset: GraphileConfig.Preset = {
   extends: [
@@ -11,6 +12,7 @@ const preset: GraphileConfig.Preset = {
     PgSimplifyInflectionPreset,
     PgManyToManyPreset,
   ],
+  plugins: [PgPostgisWktPlugin],
   pgServices: [
     makePgService({
       connectionString: process.env.DB_CONNECTION,
