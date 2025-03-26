@@ -1,7 +1,6 @@
 import type { PgCodec } from '@dataplan/pg'
 import { gatherConfig } from 'graphile-build'
 import { EXPORTABLE } from 'graphile-build'
-
 import { version } from './version.js'
 import { SQL } from 'postgraphile/pg-sql2'
 
@@ -64,7 +63,9 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsText, received ${typeof value}`
+                `Expected string from ST_AsText, received ${typeof value} (value: ${String(
+                  value
+                ).slice(0, 50)})`
               )
             }
             return value
@@ -114,7 +115,9 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsText(geography), received ${typeof value}`
+                `Expected string from ST_AsText(geography), received ${typeof value} (value: ${String(
+                  value
+                ).slice(0, 50)})`
               )
             }
             return value
