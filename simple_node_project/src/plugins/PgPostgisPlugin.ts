@@ -36,13 +36,13 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace GraphileConfig {
     interface Plugins {
-      PgPostgisWktPlugin: true
+      PgPostgisPlugin: true
     }
   }
 }
 
-export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
-  name: 'PgPostgisWktPlugin',
+export const PgPostgisPlugin: GraphileConfig.Plugin = {
+  name: 'PgPostgisPlugin',
   version,
 
   gather: gatherConfig({
@@ -59,31 +59,19 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           name: 'geometry',
           sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
 
-          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsGeoJSON, received ${typeof value} (value: ${String(
+                `Expected string from ST_AsText, received ${typeof value} (value: ${String(
                   value
                 ).slice(0, 50)})`
               )
             }
-            try {
-              return JSON.parse(value)
-            } catch (e) {
-              console.error('Failed to parse GeoJSON string:', value)
-              if (e instanceof Error) {
-                throw new Error(
-                  `Invalid GeoJSON received from database: ${e.message}`
-                )
-              } else {
-                throw new Error('Invalid GeoJSON received from database')
-              }
-            }
+            return value
           },
 
           toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value.
             return value
           },
 
@@ -97,15 +85,15 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null, // Required property
+          executor: null,
         }),
-        [sql] // Dependencies for EXPORTABLE
+        [sql]
       )
 
       // Codec for array '_geometry' type
       const geometryArrayCodec = EXPORTABLE(
         (listOfCodec, geometryCodec) => listOfCodec(geometryCodec),
-        [listOfCodec, geometryCodec] // Dependencies for EXPORTABLE
+        [listOfCodec, geometryCodec]
       )
       // --- End Geometry Codecs ---
 
@@ -125,29 +113,19 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           name: 'geography',
           sqlType: sql`pg_catalog.text`,
 
-          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected JSON string from ST_AsGeoJSON, received ${typeof value}`
+                `Expected string from ST_AsText(geography), received ${typeof value} (value: ${String(
+                  value
+                ).slice(0, 50)})`
               )
             }
-            try {
-              return JSON.parse(value)
-            } catch (e) {
-              console.error('Failed to parse GeoJSON string:', value)
-              if (e instanceof Error) {
-                throw new Error(
-                  `Invalid GeoJSON received from database: ${e.message}`
-                )
-              } else {
-                throw new Error('Invalid GeoJSON received from database')
-              }
-            }
+            return value
           },
           // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
           toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value for the query.
             return value
           },
 
@@ -160,7 +138,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null, // temporarily null, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
+          executor: null,
         }),
         [sql]
       )
@@ -289,11 +267,11 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
             geographyScalarTypeName
           )
           console.log(
-            `PgPostgisWktPlugin: Mapped SCALAR geography codec to GraphQL '${geographyScalarTypeName}' type (representing WKT).`
+            `PgPostgisPlugin: Mapped SCALAR geography codec to GraphQL '${geographyScalarTypeName}' type (representing WKT).`
           )
         } else {
           console.warn(
-            'PgPostgisWktPlugin: SCALAR geography codec not found in registry during schema init.'
+            'PgPostgisPlugin: SCALAR geography codec not found in registry during schema init.'
           )
         }
         return _
