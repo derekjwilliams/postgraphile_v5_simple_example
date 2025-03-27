@@ -142,7 +142,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null, // Required property
+          executor: null, // get's assigned in the hook
         }),
         [sql] // Dependencies for EXPORTABLE
       )
@@ -183,23 +183,41 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
         const geometryArrayTypeName = `_${geometryCodecName}`
         const geographyCodecName = info.state.geographyCodec.name
         const geographyArrayTypeName = `_${geographyCodecName}`
-        const typeNameToCodecMap: { [key: string]: PgCodec } = {
+
+        // Simple map to from codec name to codec
+        const typeNameToBaseCodecMap: { [key: string]: PgCodec } = {
           [geometryCodecName]: info.state.geometryCodec,
           [geometryArrayTypeName]: info.state.geometryArrayCodec,
           [geographyCodecName]: info.state.geographyCodec,
           [geographyArrayTypeName]: info.state.geographyArrayCodec,
         }
-        const matchingCodec = typeNameToCodecMap[pgType.typname]
 
-        if (matchingCodec) {
-          event.pgCodec = matchingCodec
+        const codec = typeNameToBaseCodecMap[pgType.typname]
+
+        // If we found codec name in our map then use the codec found
+        if (codec) {
+          // get the executor from introspection, e.g. oid may be different in different databases (Thanks Benjie!)
+          const executor =
+            info.helpers.pgIntrospection.getExecutorForService(serviceName)
+          if (!executor) {
+            console.warn(
+              `PgPostgisWktPlugin: Could not find executor for service '${serviceName}'.`
+            )
+            return
+          }
+
+          // Create the new codec object using the template and the correct executor
+          event.pgCodec = {
+            ...codec, // spread from the "template"
+            executor: executor, // and override the executor
+          }
+
           const oid =
             'oid' in pgType
               ? String((pgType as { oid: unknown }).oid)
-              : '[unknown OID]'
-
+              : '[--unknown OID--]'
           console.log(
-            `PgPostgisWktPlugin: Found '${pgType.typname}' type (OID ${oid}), assigning codec '${matchingCodec.name}'.`
+            `PgPostgisWktPlugin: Found '${pgType.typname}' type (OID ${oid}) in service '${serviceName}', assigning codec '${codec.name}' executor.`
           )
         }
       },
