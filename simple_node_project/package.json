@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "GRAPHILE_ENV=development NODE_OPTIONS='--loader ts-node/esm' node --no-warnings=ExperimentalWarning  src/server.ts"
+    "dev": "GRAPHILE_ENV=development NODE_OPTIONS='--loader ts-node/esm' node --no-warnings=ExperimentalWarning  src/server.ts",
+    "lint": "eslint ./src/plugins/PgPostgisWktPlugin.ts --fix"
   },
   "dependencies": {
     "@graphile-contrib/pg-many-to-many": "^2.0.0-beta.6",
@@ -20,8 +21,14 @@
     "@types/express": "^5.0.0",
     "@types/node": "^20.11.24",
     "eslint": "^9.20.1",
+    "eslint-plugin-graphile-export": "^0.0.2-beta.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
+  },
+  "overrides": {
+    "eslint-plugin-graphile-export": {
+      "eslint": "^9.20.1"
+    }
   }
 }

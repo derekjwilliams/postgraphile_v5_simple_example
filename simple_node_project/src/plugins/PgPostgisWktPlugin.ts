@@ -105,6 +105,14 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
 
       // --- Geography Codecs -------------
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const add = EXPORTABLE(
+        () =>
+          function add(b: number) {
+            return b
+          },
+        []
+      )
       // Codec for scalar 'geography' type
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
@@ -142,7 +150,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null, // temporary, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
+          executor: null, // temporarily null, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
         }),
         [sql] // Dependencies for EXPORTABLE
       )
