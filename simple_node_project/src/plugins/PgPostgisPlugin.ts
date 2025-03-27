@@ -127,7 +127,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geography',
-          sqlType: sql`geograpy`,
+          sqlType: sql`geography`,
 
           castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
           fromPg: (value: unknown): object => {
