@@ -59,27 +59,16 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           name: 'geometry',
           sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
 
-          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsGeoJSON, received ${typeof value} (value: ${String(
+                `Expected string from ST_AsText, received ${typeof value} (value: ${String(
                   value
                 ).slice(0, 50)})`
               )
             }
-            try {
-              return JSON.parse(value)
-            } catch (e) {
-              console.error('Failed to parse GeoJSON string:', value)
-              if (e instanceof Error) {
-                throw new Error(
-                  `Invalid GeoJSON received from database: ${e.message}`
-                )
-              } else {
-                throw new Error('Invalid GeoJSON received from database')
-              }
-            }
+            return value
           },
 
           toPg: (value: string): string => {
@@ -89,6 +78,11 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
 
           // Input Parameter -> PG Type Conversion, this was to avoid a "String is not SQL error"
           castToPg: (fragment: SQL): SQL => {
+            // 'fragment' represents the parameterized WKT string
+            // Wrap it with ST_GeomFromEWKT to convert it to geometry in SQL.
+            // fragment is the incoming WKT/EWKT string from GraphQL input
+            // The sql tag automatically handles parameterization ($1, $2, etc.)
+            // to prevent SQL injection.
             return sql`ST_GeomFromEWKT(${fragment})`
           },
 
@@ -111,39 +105,22 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
 
       // --- Geography Codecs -------------
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const add = EXPORTABLE(
-        () =>
-          function add(b: number) {
-            return b
-          },
-        []
-      )
       // Codec for scalar 'geography' type
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geography',
           sqlType: sql`pg_catalog.text`,
 
-          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected JSON string from ST_AsGeoJSON, received ${typeof value}`
+                `Expected string from ST_AsText(geography), received ${typeof value} (value: ${String(
+                  value
+                ).slice(0, 50)})`
               )
             }
-            try {
-              return JSON.parse(value)
-            } catch (e) {
-              console.error('Failed to parse GeoJSON string:', value)
-              if (e instanceof Error) {
-                throw new Error(
-                  `Invalid GeoJSON received from database: ${e.message}`
-                )
-              } else {
-                throw new Error('Invalid GeoJSON received from database')
-              }
-            }
+            return value
           },
           // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
           toPg: (value: string): string => {
@@ -152,6 +129,11 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           },
 
           castToPg: (fragment: SQL): SQL => {
+            // 'fragment' represents the parameterized WKT string
+            // Wrap it with ST_GeogFromText to convert it to geograpy in SQL.
+            // Value is the incoming WKT/EWKT string from GraphQL input
+            // The sql tag automatically handles parameterization ($1, $2, etc.)
+            // to prevent SQL injection.
             return sql`ST_GeogFromText(${fragment})`
           },
 
@@ -162,13 +144,13 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           rangeItemCodec: undefined,
           executor: null, // temporarily null, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
         }),
-        [sql]
+        [sql] // Dependencies for EXPORTABLE
       )
 
       // Codec for the Array '_geography' type
       const geographyArrayCodec = EXPORTABLE(
         (listOfCodec, geographyCodec) => listOfCodec(geographyCodec),
-        [listOfCodec, geographyCodec]
+        [listOfCodec, geographyCodec] // Dependencies for EXPORTABLE
       )
 
       // Return all the things (codecs)

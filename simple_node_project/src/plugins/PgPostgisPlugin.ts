@@ -36,7 +36,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace GraphileConfig {
     interface Plugins {
-      PgPostgisPlugin: true
+      PgPostgisWktPlugin: true
     }
   }
 }
@@ -59,19 +59,31 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           name: 'geometry',
           sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
 
-          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsText, received ${typeof value} (value: ${String(
+                `Expected string from ST_AsGeoJSON, received ${typeof value} (value: ${String(
                   value
                 ).slice(0, 50)})`
               )
             }
-            return value
+            try {
+              return JSON.parse(value)
+            } catch (e) {
+              console.error('Failed to parse GeoJSON string:', value)
+              if (e instanceof Error) {
+                throw new Error(
+                  `Invalid GeoJSON received from database: ${e.message}`
+                )
+              } else {
+                throw new Error('Invalid GeoJSON received from database')
+              }
+            }
           },
 
           toPg: (value: string): string => {
+            // Return the raw WKT string. This becomes the parameter value.
             return value
           },
 
@@ -85,15 +97,15 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null,
+          executor: null, // Required property
         }),
-        [sql]
+        [sql] // Dependencies for EXPORTABLE
       )
 
       // Codec for array '_geometry' type
       const geometryArrayCodec = EXPORTABLE(
         (listOfCodec, geometryCodec) => listOfCodec(geometryCodec),
-        [listOfCodec, geometryCodec]
+        [listOfCodec, geometryCodec] // Dependencies for EXPORTABLE
       )
       // --- End Geometry Codecs ---
 
@@ -113,19 +125,29 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           name: 'geography',
           sqlType: sql`pg_catalog.text`,
 
-          castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
+          castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
           fromPg: (value: unknown): string => {
             if (typeof value !== 'string') {
               throw new Error(
-                `Expected string from ST_AsText(geography), received ${typeof value} (value: ${String(
-                  value
-                ).slice(0, 50)})`
+                `Expected JSON string from ST_AsGeoJSON, received ${typeof value}`
               )
             }
-            return value
+            try {
+              return JSON.parse(value)
+            } catch (e) {
+              console.error('Failed to parse GeoJSON string:', value)
+              if (e instanceof Error) {
+                throw new Error(
+                  `Invalid GeoJSON received from database: ${e.message}`
+                )
+              } else {
+                throw new Error('Invalid GeoJSON received from database')
+              }
+            }
           },
           // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
           toPg: (value: string): string => {
+            // Return the raw WKT string. This becomes the parameter value for the query.
             return value
           },
 
@@ -138,7 +160,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null,
+          executor: null, // temporarily null, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
         }),
         [sql]
       )
@@ -197,7 +219,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
             info.helpers.pgIntrospection.getExecutorForService(serviceName)
           if (!executor) {
             console.warn(
-              `PgPostgisWktPlugin: Could not find executor for service '${serviceName}'.`
+              `PgPostgisPlugin: Could not find executor for service '${serviceName}'.`
             )
             return
           }
@@ -213,7 +235,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
               ? String((pgType as { oid: unknown }).oid)
               : '[--unknown OID--]'
           console.log(
-            `PgPostgisWktPlugin: Found '${pgType.typname}' type (OID ${oid}) in service '${serviceName}', assigning codec '${codec.name}' executor.`
+            `PgPostgisPlugin: Found '${pgType.typname}' type (OID ${oid}) in service '${serviceName}', assigning codec '${codec.name}' executor.`
           )
         }
       },
@@ -244,11 +266,11 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
             geometryScalarTypeName
           )
           console.log(
-            `PgPostgisWktPlugin: Mapped SCALAR geometry codec to GraphQL '${geometryScalarTypeName}' type (representing WKT)`
+            `PgPostgisPlugin: Mapped SCALAR geometry codec to GraphQL '${geometryScalarTypeName}' type`
           )
         } else {
           console.warn(
-            'PgPostgisWktPlugin: SCALAR geometry codec not found in registry during schema init.'
+            'PgPostgisPlugin: SCALAR geometry codec not found in registry during schema init.'
           )
         }
 
@@ -267,7 +289,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
             geographyScalarTypeName
           )
           console.log(
-            `PgPostgisPlugin: Mapped SCALAR geography codec to GraphQL '${geographyScalarTypeName}' type (representing WKT).`
+            `PgPostgisPlugin: Mapped SCALAR geography codec to GraphQL '${geographyScalarTypeName}' type.`
           )
         } else {
           console.warn(
