@@ -3,6 +3,7 @@ import { gatherConfig } from 'graphile-build'
 import { EXPORTABLE } from 'graphile-build'
 import { version } from './version.js'
 import { SQL } from 'postgraphile/pg-sql2'
+import { GraphQLJSON } from 'graphql-type-json'
 
 // Define state to hold our geometry and geography codecs during the gather phase
 interface State {
@@ -10,7 +11,7 @@ interface State {
     'geometry',
     undefined,
     string,
-    string,
+    object,
     undefined,
     undefined,
     undefined
@@ -21,7 +22,7 @@ interface State {
     'geography',
     undefined,
     string,
-    string,
+    object,
     undefined,
     undefined,
     undefined
@@ -36,7 +37,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace GraphileConfig {
     interface Plugins {
-      PgPostgisWktPlugin: true
+      PgPostgisPlugin: true
     }
   }
 }
@@ -60,7 +61,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
 
           castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
-          fromPg: (value: unknown): string => {
+          fromPg: (value: unknown): object => {
             if (typeof value !== 'string') {
               throw new Error(
                 `Expected string from ST_AsGeoJSON, received ${typeof value} (value: ${String(
@@ -77,19 +78,30 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
                   `Invalid GeoJSON received from database: ${e.message}`
                 )
               } else {
-                throw new Error('Invalid GeoJSON received from database')
+                throw e
               }
             }
           },
 
-          toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value.
-            return value
+          toPg: (value: object): string => {
+            // Accepts object, returns JSON string
+            try {
+              // Convert the GeoJSON JS object back into a string for the DB function
+              return JSON.stringify(value)
+            } catch (e: any) {
+              console.error(
+                'Failed to stringify GeoJSON object for input:',
+                value
+              )
+              throw new Error(
+                `Invalid GeoJSON object provided for input: ${e.message}`
+              )
+            }
           },
 
           // Input Parameter -> PG Type Conversion, this was to avoid a "String is not SQL error"
           castToPg: (fragment: SQL): SQL => {
-            return sql`ST_GeomFromEWKT(${fragment})`
+            return sql`ST_GeomFromGeoJSON(${fragment})`
           },
 
           isBinary: false,
@@ -111,14 +123,6 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
 
       // --- Geography Codecs -------------
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const add = EXPORTABLE(
-        () =>
-          function add(b: number) {
-            return b
-          },
-        []
-      )
       // Codec for scalar 'geography' type
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
@@ -126,7 +130,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
           sqlType: sql`pg_catalog.text`,
 
           castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
-          fromPg: (value: unknown): string => {
+          fromPg: (value: unknown): object => {
             if (typeof value !== 'string') {
               throw new Error(
                 `Expected JSON string from ST_AsGeoJSON, received ${typeof value}`
@@ -141,18 +145,29 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
                   `Invalid GeoJSON received from database: ${e.message}`
                 )
               } else {
-                throw new Error('Invalid GeoJSON received from database')
+                throw e
               }
             }
           },
           // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
-          toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value for the query.
-            return value
+          toPg: (value: object): string => {
+            // Accepts object, returns JSON string
+            try {
+              // Convert the GeoJSON JS object back into a string for the DB function
+              return JSON.stringify(value)
+            } catch (e: any) {
+              console.error(
+                'Failed to stringify GeoJSON object for input:',
+                value
+              )
+              throw new Error(
+                `Invalid GeoJSON object provided for input: ${e.message}`
+              )
+            }
           },
 
           castToPg: (fragment: SQL): SQL => {
-            return sql`ST_GeogFromText(${fragment})`
+            return sql`ST_GeomFromGeoJSON(${fragment})`
           },
 
           isBinary: false,
@@ -252,19 +267,12 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
         } = build
 
         // --- Handle Geometry Scalar type ---
+        const jsonScalarTypeName = GraphQLJSON.name
         const geometryCodec = pgRegistry.pgCodecs.geometry
         if (geometryCodec) {
           const geometryScalarTypeName = GraphQLString.name
-          setGraphQLTypeForPgCodec(
-            geometryCodec,
-            'output',
-            geometryScalarTypeName
-          )
-          setGraphQLTypeForPgCodec(
-            geometryCodec,
-            'input',
-            geometryScalarTypeName
-          )
+          setGraphQLTypeForPgCodec(geometryCodec, 'output', jsonScalarTypeName)
+          setGraphQLTypeForPgCodec(geometryCodec, 'input', jsonScalarTypeName)
           console.log(
             `PgPostgisPlugin: Mapped SCALAR geometry codec to GraphQL '${geometryScalarTypeName}' type`
           )
@@ -278,16 +286,8 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
         const geographyCodec = pgRegistry.pgCodecs.geography
         if (geographyCodec) {
           const geographyScalarTypeName = GraphQLString.name
-          setGraphQLTypeForPgCodec(
-            geographyCodec,
-            'output',
-            geographyScalarTypeName
-          )
-          setGraphQLTypeForPgCodec(
-            geographyCodec,
-            'input',
-            geographyScalarTypeName
-          )
+          setGraphQLTypeForPgCodec(geographyCodec, 'output', jsonScalarTypeName)
+          setGraphQLTypeForPgCodec(geographyCodec, 'input', jsonScalarTypeName)
           console.log(
             `PgPostgisPlugin: Mapped SCALAR geography codec to GraphQL '${geographyScalarTypeName}' type.`
           )

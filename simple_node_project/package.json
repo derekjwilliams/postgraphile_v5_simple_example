@@ -13,6 +13,7 @@
     "@graphile/simplify-inflection": "^8.0.0-beta.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "graphql-type-json": "^0.3.2",
     "postgraphile": "^5.0.0-beta.40"
   },
   "devDependencies": {

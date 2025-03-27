@@ -16,6 +16,7 @@ const preset: GraphileConfig.Preset = {
     PgManyToManyPreset,
   ],
   plugins: [PgPostgisPlugin], //Plugin is optional, remove if you don't need PostGIS support
+  // plugins: [PgPostgisWktPlugin], //Plugin is optional, remove if you don't need PostGIS support
   pgServices: [
     makePgService({
       connectionString: process.env.DB_CONNECTION,
