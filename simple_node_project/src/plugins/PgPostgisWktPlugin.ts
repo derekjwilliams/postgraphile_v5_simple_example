@@ -71,10 +71,6 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
             return value
           },
 
-          // toPg: (value: string) => {
-          //   return sql`ST_GeomFromEWKT(${sql.value(value)})`
-          // },
-          // Input (JS -> PG Parameter Value)
           toPg: (value: string): string => {
             // Return the raw WKT string. This becomes the parameter value.
             return value
