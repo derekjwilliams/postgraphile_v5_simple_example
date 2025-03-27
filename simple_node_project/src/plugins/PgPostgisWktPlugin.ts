@@ -52,8 +52,8 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
         sql,
       } = lib
 
-      // --- Geometry Codecs ---
-      // Define the geometry codec for the SCALAR 'geometry' type
+      // --- Geometry  Codecs ---
+      // Codec for scalar 'geometry' type
       const geometryCodec: State['geometryCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geometry',
@@ -76,7 +76,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
             return value
           },
 
-          // Input Parameter -> PG Type Conversion
+          // Input Parameter -> PG Type Conversion, this was to avoid a "String is not SQL error"
           castToPg: (fragment: SQL): SQL => {
             // 'fragment' represents the parameterized WKT string
             // Wrap it with ST_GeomFromEWKT to convert it to geometry in SQL.
@@ -96,12 +96,16 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
         [sql] // Dependencies for EXPORTABLE
       )
 
+      // Codec for array '_geometry' type
       const geometryArrayCodec = EXPORTABLE(
         (listOfCodec, geometryCodec) => listOfCodec(geometryCodec),
         [listOfCodec, geometryCodec] // Dependencies for EXPORTABLE
       )
-      // --- Geography Codecs ---
-      // Define the geometry codec for the SCALAR 'geometry' type
+      // --- End Geometry Codecs ---
+
+      // --- Geography Codecs -------------
+
+      // Codec for scalar 'geography' type
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geography',
@@ -120,7 +124,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           },
           // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
           toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value.
+            // Return the raw WKT string. This becomes the parameter value for the query.
             return value
           },
 
@@ -138,12 +142,12 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
           extensions: undefined,
           domainItemCodec: undefined,
           rangeItemCodec: undefined,
-          executor: null, // get's assigned in the hook
+          executor: null, // temporary, get's assigned in the hook below, e.g. info.helpers.pgIntrospection.getExecutorForService(serviceName)
         }),
         [sql] // Dependencies for EXPORTABLE
       )
 
-      // Define the codec for the ARRAY '_geography' type
+      // Codec for the Array '_geography' type
       const geographyArrayCodec = EXPORTABLE(
         (listOfCodec, geographyCodec) => listOfCodec(geographyCodec),
         [listOfCodec, geographyCodec] // Dependencies for EXPORTABLE
