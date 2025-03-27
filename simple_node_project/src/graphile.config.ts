@@ -12,8 +12,8 @@ import { PgPostgisPlugin } from './plugins/PgPostgisPlugin.js'
 const preset: GraphileConfig.Preset = {
   extends: [
     PostGraphileAmberPreset,
-    PgSimplifyInflectionPreset,
-    PgManyToManyPreset,
+    // PgSimplifyInflectionPreset,
+    // PgManyToManyPreset,
   ],
   plugins: [PgPostgisPlugin], //Plugin is optional, remove if you don't need PostGIS support
   // plugins: [PgPostgisWktPlugin], //Plugin is optional, remove if you don't need PostGIS support

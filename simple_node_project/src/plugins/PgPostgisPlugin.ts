@@ -58,7 +58,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
       const geometryCodec: State['geometryCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geometry',
-          sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
+          sqlType: sql`geometry.text`, // Since ST_AsText returns text
 
           castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
           fromPg: (value: unknown): object => {
@@ -127,7 +127,7 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geography',
-          sqlType: sql`pg_catalog.text`,
+          sqlType: sql`geograpy`,
 
           castFromPg: (fragment) => sql`ST_AsGeoJSON(${fragment})`,
           fromPg: (value: unknown): object => {
@@ -262,9 +262,44 @@ export const PgPostgisPlugin: GraphileConfig.Plugin = {
       init(_, build) {
         const {
           setGraphQLTypeForPgCodec,
-          graphql: { GraphQLString },
+          graphql: { GraphQLString, GraphQLInputObjectType, GraphQLNonNull },
           input: { pgRegistry },
+          graphql: {},
         } = build
+
+        const CRSInput = new GraphQLInputObjectType({
+          name: 'CRSInput',
+          description: 'Coordinate Reference System metadata',
+          fields: () => ({
+            type: {
+              type: GraphQLString,
+              description: 'CRS type identifier',
+            },
+            properties: {
+              type: GraphQLJSON,
+              description: 'CRS properties (e.g. {"name": "EPSG:4326"})',
+            },
+          }),
+        })
+
+        const GeoJSONInput = new GraphQLInputObjectType({
+          name: 'GeoJSONInput',
+          description: 'GeoJSON geometry representation',
+          fields: () => ({
+            type: {
+              type: new GraphQLNonNull(GraphQLString),
+              description: 'Geometry type (e.g. "Point", "LineString")',
+            },
+            coordinates: {
+              type: new GraphQLNonNull(GraphQLJSON),
+              description: 'Geometry coordinates array',
+            },
+            crs: {
+              type: CRSInput,
+              description: 'Coordinate Reference System metadata',
+            },
+          }),
+        })
 
         // --- Handle Geometry Scalar type ---
         const jsonScalarTypeName = GraphQLJSON.name

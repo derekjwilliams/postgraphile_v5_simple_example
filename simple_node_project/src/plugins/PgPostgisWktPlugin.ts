@@ -57,7 +57,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
       const geometryCodec: State['geometryCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geometry',
-          sqlType: sql`pg_catalog.text`, // Since ST_AsText returns text
+          sqlType: sql`geometry`, // Since ST_AsText returns text
 
           castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
@@ -109,7 +109,7 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
       const geographyCodec: State['geographyCodec'] = EXPORTABLE(
         (sql) => ({
           name: 'geography',
-          sqlType: sql`pg_catalog.text`,
+          sqlType: sql`geography`,
 
           castFromPg: (fragment) => sql`ST_AsText(${fragment})`,
           fromPg: (value: unknown): string => {
@@ -122,20 +122,26 @@ export const PgPostgisWktPlugin: GraphileConfig.Plugin = {
             }
             return value
           },
-          // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
-          toPg: (value: string): string => {
-            // Return the raw WKT string. This becomes the parameter value for the query.
-            return value
-          },
 
+          toPg: (value: string): string => value,
+          // Key change: Use geometry parsing and cast to geography
           castToPg: (fragment: SQL): SQL => {
-            // 'fragment' represents the parameterized WKT string
-            // Wrap it with ST_GeogFromText to convert it to geograpy in SQL.
-            // Value is the incoming WKT/EWKT string from GraphQL input
-            // The sql tag automatically handles parameterization ($1, $2, etc.)
-            // to prevent SQL injection.
-            return sql`ST_GeogFromText(${fragment})`
+            return sql`ST_GeomFromEWKT(${fragment})::geography`
           },
+          // // Input (JS -> PG Parameter Value) this is to handle the fact that we need to use SQL type and not string
+          // toPg: (value: string): string => {
+          //   // Return the raw WKT string. This becomes the parameter value for the query.
+          //   return value
+          // },
+
+          // castToPg: (fragment: SQL): SQL => {
+          //   // 'fragment' represents the parameterized WKT string
+          //   // Wrap it with ST_GeogFromText to convert it to geograpy in SQL.
+          //   // Value is the incoming WKT/EWKT string from GraphQL input
+          //   // The sql tag automatically handles parameterization ($1, $2, etc.)
+          //   // to prevent SQL injection.
+          //   return sql`ST_GeogFromText(${fragment})`
+          // },
 
           isBinary: false,
           attributes: undefined,
