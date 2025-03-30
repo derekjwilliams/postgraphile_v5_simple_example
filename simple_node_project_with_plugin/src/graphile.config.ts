@@ -4,9 +4,9 @@ import { PostGraphileAmberPreset } from 'postgraphile/presets/amber'
 import { makePgService } from 'postgraphile/adaptors/pg'
 import { PgSimplifyInflectionPreset } from '@graphile/simplify-inflection'
 import { PgManyToManyPreset } from '@graphile-contrib/pg-many-to-many'
-import { PgPostgisWktPlugin } from 'postgraphile-postgis-wkt'
+// import { PgPostgisWktPlugin } from 'postgraphile-postgis-wkt' // From npm
 //optional
-// import { PgPostgisWktPlugin } from './plugins/PgPostgisWktPlugin.js'
+import { PgPostgisWktPlugin } from './plugins/PgPostgisWktPlugin.js' // local
 // import { PgPostgisPlugin } from './plugins/PgPostgisPlugin.js'
 
 const preset: GraphileConfig.Preset = {

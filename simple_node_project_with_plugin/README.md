@@ -2,7 +2,7 @@
 
 ### What This Does
 
-Runs Postgraphile in a node express server.
+Runs Postgraphile in a node express server, using a simple plugin
 
 ### Implementation
 
@@ -180,6 +180,10 @@ const preset: GraphileConfig.Preset = {
     explain: true,
   },
 }
+
+### `plugins/PgPostgisWktPlugin.ts`
+
+TODO
 
 export default preset
 ```
